@@ -1,0 +1,10 @@
+{
+  "name": "Meter Reading Training",
+  "short_name": "Meter Training",
+  "description": "Learn to read gas meters — tutorial, practice, and Meter Invaders game",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0a0a1a",
+  "theme_color": "#0a0a1a",
+  "orientation": "portrait"
+}
