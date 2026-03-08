@@ -7,7 +7,7 @@
   //  Constants
   // ══════════════════════════════════════════════════════════
 
-  const DIAL_CLOCKWISE = [true, false, true, false];
+  const DIAL_CLOCKWISE = [true, false, true, true];
   const DIAL_LABELS    = ['×1000', '×100', '×10', '×1'];
   const DIAL_SIZE = Math.min(Math.floor((Math.min(window.innerWidth, 420) - 56) / 4), 82);
 
@@ -572,7 +572,9 @@
     document.getElementById('game-over-screen').classList.add('hidden');
     document.getElementById('game-victory-screen').classList.add('hidden');
     document.getElementById('game-screen').classList.remove('hidden');
-    setTimeout(initGame, 30);
+    // Double-RAF ensures the browser has painted at least one frame and
+    // layout is fully resolved before we read clientHeight/clientWidth.
+    requestAnimationFrame(() => requestAnimationFrame(initGame));
   }
 
   function initGame() {
@@ -580,7 +582,7 @@
 
     const area   = document.getElementById('game-area');
     const areaW  = area.clientWidth  || 375;
-    const areaH  = area.clientHeight || 220;
+    const areaH  = Math.max(area.clientHeight || 0, 160);
     const groundY = areaH - 4;
 
     // Laser canvas overlay (recreate dimensions each game)

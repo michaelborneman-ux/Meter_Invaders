@@ -1,298 +1,130 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Meter Reading Training</title>
-  <link rel="stylesheet" href="styles.css">
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#0a0a1a">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="2685.4">
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Apple Color Emoji'; -webkit-text-stroke: #000000}
+    p.p3 {margin: 0.0px 0.0px 12.0px 0.0px; font: 12.0px Times; -webkit-text-stroke: #000000}
+    p.p4 {margin: 0.0px 0.0px 0.0px 0.0px; text-align: center; font: 11.0px '.Apple Color Emoji UI'; color: #000000; color: rgba(0, 0, 0, 0.85); -webkit-text-stroke: rgba(0, 0, 0, 0.85)}
+    p.p5 {margin: 0.0px 0.0px 0.0px 0.0px; text-align: center; font: 11.0px 'Helvetica Neue'; color: #000000; color: rgba(0, 0, 0, 0.85); -webkit-text-stroke: rgba(0, 0, 0, 0.85)}
+    p.p6 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Times; -webkit-text-stroke: #000000}
+    p.p8 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Times; -webkit-text-stroke: #000000; min-height: 14.0px}
+    p.p10 {margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px 'Helvetica Neue'; color: #000000; color: rgba(0, 0, 0, 0.85); -webkit-text-stroke: rgba(0, 0, 0, 0.85)}
+    p.p11 {margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px 'Helvetica Neue'; color: #000000; color: rgba(0, 0, 0, 0.26); -webkit-text-stroke: rgba(0, 0, 0, 0.26)}
+    p.p12 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Times New Roman'; -webkit-text-stroke: #000000}
+    li.li6 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Times; -webkit-text-stroke: #000000}
+    span.s1 {font-kerning: none}
+    span.s2 {font-kerning: none; background-color: #b3b3b3}
+    span.s3 {font: 12.0px 'Times New Roman'; font-kerning: none}
+    span.s4 {font: 12.0px Times; font-kerning: none; color: #000000; -webkit-text-stroke: 0px #000000}
+    span.s5 {font-kerning: none; color: rgba(0, 0, 0, 0.85); background-color: #b3b3b3; -webkit-text-stroke: 0px rgba(0, 0, 0, 0.85)}
+    span.s6 {-webkit-text-stroke: 0px #000000}
+    span.s7 {font: 12.0px 'Zapf Dingbats'; font-kerning: none}
+    span.s8 {font: 12.0px 'Hiragino Mincho ProN'; font-kerning: none}
+    span.s9 {font: 12.0px Times; font-kerning: none}
+    span.s10 {font: 12.0px 'Apple Color Emoji'; font-kerning: none}
+    span.s11 {font: 11.0px '.Apple Color Emoji UI'; font-kerning: none; background-color: #b3b3b3}
+    ul.ul1 {list-style-type: disc}
+  </style>
 </head>
 <body>
-
-<main id="main">
-
-<!-- ═══════════════════════════════════════════════════════════ HOME -->
-<div id="view-home" class="view active">
-  <div class="home-hero">
-    <div class="hero-icon">⚡</div>
-    <h1 class="hero-title">Meter Reading<br>Training</h1>
-    <p class="hero-sub">Learn to read gas meters like a pro</p>
-  </div>
-  <div class="home-cards">
-    <button class="home-card" id="btn-home-learn">
-      <div class="card-icon">📖</div>
-      <div class="card-content">
-        <div class="card-title">Learn</div>
-        <div class="card-desc">Step-by-step guide for beginners</div>
-      </div>
-    </button>
-    <button class="home-card" id="btn-home-practice">
-      <div class="card-icon">🎯</div>
-      <div class="card-content">
-        <div class="card-title">Practice</div>
-        <div class="card-desc">Free practice with instant feedback</div>
-      </div>
-    </button>
-    <button class="home-card game-card" id="btn-home-game">
-      <div class="card-icon">👾</div>
-      <div class="card-content">
-        <div class="card-title">Meter Invaders</div>
-        <div class="card-desc">Blast aliens by reading meters!</div>
-      </div>
-    </button>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════════════════ LEARN -->
-<div id="view-learn" class="view">
-  <div class="view-topbar">
-    <h2>Learn</h2>
-    <div class="step-dots">
-      <span class="step-dot active"></span>
-      <span class="step-dot"></span>
-      <span class="step-dot"></span>
-      <span class="step-dot"></span>
-      <span class="step-dot"></span>
-    </div>
-  </div>
-
-  <div class="learn-content">
-
-    <!-- Step 0: Introduction -->
-    <div id="learn-step-0" class="learn-step active">
-      <h3>What is a Gas Meter?</h3>
-      <p>A gas meter measures how much natural gas flows through it. It tracks total usage in cubic feet.</p>
-      <p>Your job as a meter reader is to record the <strong>4-digit number</strong> shown on the dials — accurately, every time.</p>
-      <div class="learn-callout">
-        The 4 dials together give you the reading.<br>
-        Each dial shows one digit: <strong>thousands, hundreds, tens, and units.</strong>
-      </div>
-      <p>In the next steps you'll learn how to read each dial correctly.</p>
-    </div>
-
-    <!-- Step 1: Dial directions -->
-    <div id="learn-step-1" class="learn-step">
-      <h3>Clockwise &amp; Counter-clockwise Dials</h3>
-      <p>Each dial rotates in a different direction, alternating CW and CCW from left to right.</p>
-      <div class="learn-demos-row">
-        <div class="learn-demo-item">
-          <div id="learn-demo-cw" class="demo-canvas-wrap"></div>
-          <div class="demo-label"><strong>Clockwise (CW)</strong><br>Numbers increase →</div>
-        </div>
-        <div class="learn-demo-item">
-          <div id="learn-demo-ccw" class="demo-canvas-wrap"></div>
-          <div class="demo-label"><strong>Counter-clockwise (CCW)</strong><br>Numbers increase ←</div>
-        </div>
-      </div>
-      <div class="learn-callout">Always check the <strong>CW / CCW badge</strong> below each dial before reading it.</div>
-    </div>
-
-    <!-- Step 2: Reading the needle -->
-    <div id="learn-step-2" class="learn-step">
-      <h3>Reading the Needle</h3>
-      <p>The needle always sits <em>between</em> two numbers. <strong>Read the lower number the needle has already passed.</strong></p>
-      <div class="learn-demos-row">
-        <div class="learn-demo-item">
-          <div id="learn-demo-needle-left" class="demo-canvas-wrap"></div>
-          <div class="demo-label">This dial → read <strong>4</strong></div>
-        </div>
-        <div class="learn-demo-item">
-          <div id="learn-demo-needle-right" class="demo-canvas-wrap"></div>
-          <div class="demo-label">Right dial shows <strong>3</strong></div>
-        </div>
-      </div>
-      <div class="learn-callout">
-        <strong>The right dial tells you exactly where the needle is:</strong><br>
-        Its digit = how far past the lower number the left needle has traveled.<br><br>
-        Right = 1 → needle is 1/10 past the lower number<br>
-        Right = 3 → needle is 3/10 past (like above — read <strong>4</strong>)<br>
-        Right = 9 → needle is 9/10 past (almost at the next number — still read the lower)<br>
-        Right = 0 → needle is <em>exactly on</em> the number — read it
-      </div>
-    </div>
-
-    <!-- Step 3: Full meter -->
-    <div id="learn-step-3" class="learn-step">
-      <h3>Reading All 4 Dials</h3>
-      <p>Read from <strong>left to right</strong>. Each dial gives one digit of the 4-digit reading.</p>
-      <div id="learn-demo-full" class="dials-row learn-full-demo"></div>
-      <div class="reading-result-box">
-        Reading = <span id="learn-step4-answer" class="reading-highlight">—</span>
-      </div>
-      <div class="learn-callout">Left dial = thousands &nbsp;|&nbsp; Right dial = units</div>
-    </div>
-
-    <!-- Step 4: Try it yourself -->
-    <div id="learn-step-4" class="learn-step">
-      <h3>Try It Yourself</h3>
-      <p>Read this meter and enter the 4-digit number.</p>
-      <div id="learn-try-dials" class="dials-row"></div>
-      <div class="input-row">
-        <input type="tel" id="learn-d0" class="digit-box" inputmode="numeric" maxlength="1" pattern="[0-9]" autocomplete="off">
-        <input type="tel" id="learn-d1" class="digit-box" inputmode="numeric" maxlength="1" pattern="[0-9]" autocomplete="off">
-        <input type="tel" id="learn-d2" class="digit-box" inputmode="numeric" maxlength="1" pattern="[0-9]" autocomplete="off">
-        <input type="tel" id="learn-d3" class="digit-box" inputmode="numeric" maxlength="1" pattern="[0-9]" autocomplete="off">
-        <button class="btn-primary" id="btn-learn-try-submit">Check</button>
-      </div>
-      <div id="learn-try-feedback" class="feedback-bar hidden"></div>
-      <button class="btn-secondary" id="btn-learn-try-new" style="margin-top:10px">Try Another</button>
-    </div>
-
-  </div><!-- /learn-content -->
-
-  <div class="learn-nav">
-    <button class="btn-outline" id="btn-learn-prev" disabled>← Back</button>
-    <button class="btn-primary" id="btn-learn-next">Next →</button>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════════════════ PRACTICE -->
-<div id="view-practice" class="view">
-  <div class="view-topbar">
-    <h2>Practice</h2>
-    <div class="prac-stats">
-      <span class="stat-correct" id="prac-correct">0</span><span class="stat-sep">/</span><span id="prac-total">0</span>
-    </div>
-  </div>
-
-  <div id="practice-dials" class="dials-row"></div>
-
-  <div id="prac-feedback" class="feedback-bar hidden">
-    <span id="prac-fb-msg"></span>
-  </div>
-
-  <div class="input-row">
-    <input type="tel" id="prac-d0" class="digit-box" inputmode="numeric" maxlength="1" pattern="[0-9]" autocomplete="off">
-    <input type="tel" id="prac-d1" class="digit-box" inputmode="numeric" maxlength="1" pattern="[0-9]" autocomplete="off">
-    <input type="tel" id="prac-d2" class="digit-box" inputmode="numeric" maxlength="1" pattern="[0-9]" autocomplete="off">
-    <input type="tel" id="prac-d3" class="digit-box" inputmode="numeric" maxlength="1" pattern="[0-9]" autocomplete="off">
-    <button class="btn-primary" id="btn-prac-submit">Submit</button>
-  </div>
-
-  <div class="prac-options">
-    <label class="toggle-label">
-      <input type="checkbox" id="prac-pro">
-      <span class="toggle-text">Pro Mode (no numbers on dials)</span>
-    </label>
-    <div class="dir-toggle">
-      <span class="dir-label">Entry direction:</span>
-      <button class="dir-btn active" id="prac-dir-ltr">Left → Right</button>
-      <button class="dir-btn" id="prac-dir-rtl">Right → Left</button>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════════════════ GAME -->
-<div id="view-game" class="view">
-
-  <!-- ── Start screen ── -->
-  <div id="game-start-screen" class="game-overlay">
-    <div class="game-overlay-content">
-      <div class="game-logo-big">👾</div>
-      <h2 class="game-main-title">Meter Invaders</h2>
-      <p class="game-desc">Read the gas meter at the bottom to blast the aliens before they reach the ground!</p>
-      <ul class="game-rules-list">
-        <li>✓ Correct reading → alien destroyed</li>
-        <li>✗ Wrong answer → lose a life</li>
-        <li>⬇ Aliens reach the line → game over</li>
-        <li>❤ You have 3 lives</li>
-      </ul>
-      <div class="dir-toggle">
-        <span class="dir-label">Entry direction:</span>
-        <button class="dir-btn active" id="game-dir-ltr">Left → Right</button>
-        <button class="dir-btn" id="game-dir-rtl">Right → Left</button>
-      </div>
-      <button class="btn-game-start" id="btn-game-start">▶ START GAME</button>
-    </div>
-  </div>
-
-  <!-- ── Active game ── -->
-  <div id="game-screen" class="hidden">
-    <div class="game-hud">
-      <div id="game-lives">
-        <span class="heart alive">♥</span>
-        <span class="heart alive">♥</span>
-        <span class="heart alive">♥</span>
-      </div>
-      <div class="hud-score">
-        <div class="hud-label">SCORE</div>
-        <div id="game-score-display">0</div>
-      </div>
-      <div class="hud-right">
-        <div id="game-level" class="hud-level">LV 1</div>
-        <div id="game-remaining">👾 10</div>
-      </div>
-    </div>
-
-    <div id="game-area">
-      <div id="alien-grid"></div>
-      <div id="ground-line"></div>
-    </div>
-
-    <div class="game-meter-section">
-      <div id="game-dials" class="dials-row"></div>
-      <div id="game-feedback" class="feedback-bar hidden"></div>
-      <div class="input-row">
-        <input type="tel" id="game-d0" class="digit-box" inputmode="numeric" maxlength="1" pattern="[0-9]" autocomplete="off">
-        <input type="tel" id="game-d1" class="digit-box" inputmode="numeric" maxlength="1" pattern="[0-9]" autocomplete="off">
-        <input type="tel" id="game-d2" class="digit-box" inputmode="numeric" maxlength="1" pattern="[0-9]" autocomplete="off">
-        <input type="tel" id="game-d3" class="digit-box" inputmode="numeric" maxlength="1" pattern="[0-9]" autocomplete="off">
-        <button class="btn-fire" id="btn-game-fire">FIRE!</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── Game Over ── -->
-  <div id="game-over-screen" class="game-overlay hidden">
-    <div class="game-overlay-content">
-      <div class="game-logo-big">💀</div>
-      <h2 class="game-over-title">GAME OVER</h2>
-      <p class="final-score-line">Score: <strong id="game-over-score">0</strong></p>
-      <button class="btn-game-start" id="btn-game-retry">▶ Play Again</button>
-      <button class="btn-secondary" id="btn-game-home">Home</button>
-    </div>
-  </div>
-
-  <!-- ── Victory ── -->
-  <div id="game-victory-screen" class="game-overlay hidden">
-    <div class="game-overlay-content">
-      <div class="game-logo-big">🏆</div>
-      <h2 class="victory-title">VICTORY!</h2>
-      <p>All aliens destroyed!</p>
-      <p class="final-score-line">Score: <strong id="game-victory-score">0</strong></p>
-      <input type="text" id="game-name-input" class="name-input" placeholder="Enter your name" maxlength="20" autocomplete="off">
-      <button class="btn-game-start" id="btn-save-game-score">💾 Save Score</button>
-      <button class="btn-secondary" id="btn-game-retry2">▶ Play Again</button>
-    </div>
-  </div>
-
-</div><!-- /view-game -->
-
-</main>
-
-<!-- Bottom navigation -->
-<nav class="bottom-nav">
-  <button class="nav-btn nav-active" data-view="view-home">
-    <span class="nav-icon">🏠</span>
-    <span class="nav-label">Home</span>
-  </button>
-  <button class="nav-btn" data-view="view-learn">
-    <span class="nav-icon">📖</span>
-    <span class="nav-label">Learn</span>
-  </button>
-  <button class="nav-btn" data-view="view-practice">
-    <span class="nav-icon">🎯</span>
-    <span class="nav-label">Practice</span>
-  </button>
-  <button class="nav-btn" data-view="view-game">
-    <span class="nav-icon">👾</span>
-    <span class="nav-label">Game</span>
-  </button>
-</nav>
-
-<script src="app.js"></script>
+<p class="p1"><span class="s1">⚡</span></p>
+<h1 style="margin: 0.0px 0.0px 16.1px 0.0px; font: 24.0px Times; -webkit-text-stroke: #000000"><span class="s1"><b>Meter Reading<br>
+Training</b></span></h1>
+<p class="p3"><span class="s1">Learn to read gas meters like a pro</span></p>
+<p class="p4"><span class="s2">📖</span></p>
+<p class="p5"><span class="s2">Learn</span></p>
+<p class="p5"><span class="s2">Step-by-step guide for beginners</span></p>
+<p class="p4"><span class="s2">🎯</span></p>
+<p class="p5"><span class="s2">Practice</span></p>
+<p class="p5"><span class="s2">Free practice with instant feedback</span></p>
+<p class="p4"><span class="s2">👾</span></p>
+<p class="p5"><span class="s2">Meter Invaders</span></p>
+<p class="p5"><span class="s2">Blast aliens by reading meters!</span></p>
+<p class="p6"><span class="s1">v1.1.0</span></p>
+<h2 style="margin: 0.0px 0.0px 14.9px 0.0px; font: 18.0px Times; -webkit-text-stroke: #000000"><span class="s1"><b>Learn</b></span></h2>
+<p class="p8"><span class="s1"></span><br></p>
+<h3 style="margin: 0.0px 0.0px 14.0px 0.0px; font: 14.0px Times; -webkit-text-stroke: #000000"><span class="s1"><b>What is a Gas Meter?</b></span></h3>
+<p class="p3"><span class="s1">A gas meter measures how much natural gas flows through it. It tracks total usage in cubic feet.</span></p>
+<p class="p3"><span class="s1">Your job as a meter reader is to record the <b>4-digit number</b> shown on the dials — accurately, every time.</span></p>
+<p class="p6"><span class="s1">The 4 dials together give you the reading.</span></p>
+<p class="p6"><span class="s1">Each dial shows one digit: <b>thousands, hundreds, tens, and units.</b><b></b></span></p>
+<p class="p3"><span class="s1">In the next steps you'll learn how to read each dial correctly.</span></p>
+<h3 style="margin: 0.0px 0.0px 14.0px 0.0px; font: 14.0px Times; -webkit-text-stroke: #000000"><span class="s1"><b>Clockwise &amp; Counter-clockwise Dials</b></span></h3>
+<p class="p3"><span class="s1">Each dial rotates in a different direction, alternating CW and CCW from left to right.</span></p>
+<p class="p8"><span class="s1"></span><br></p>
+<p class="p6"><span class="s1"><b>Clockwise (CW)</b><b></b></span></p>
+<p class="p6"><span class="s1">Numbers increase </span><span class="s3">→</span></p>
+<p class="p8"><span class="s1"></span><br></p>
+<p class="p6"><span class="s1"><b>Counter-clockwise (CCW)</b><b></b></span></p>
+<p class="p6"><span class="s1">Numbers increase </span><span class="s3">←</span></p>
+<p class="p6"><span class="s1">Always check the <b>CW / CCW badge</b> below each dial before reading it.</span></p>
+<h3 style="margin: 0.0px 0.0px 14.0px 0.0px; font: 14.0px Times; -webkit-text-stroke: #000000"><span class="s1"><b>Reading the Needle</b></span></h3>
+<p class="p3"><span class="s1">The needle always sits <i>between</i> two numbers. <b>Read the lower number the needle has already passed.</b><b></b></span></p>
+<p class="p8"><span class="s1"></span><br></p>
+<p class="p6"><span class="s1">This dial </span><span class="s3">→</span><span class="s1"> read <b>4</b><b></b></span></p>
+<p class="p8"><span class="s1"></span><br></p>
+<p class="p6"><span class="s1">Right dial shows <b>3</b><b></b></span></p>
+<p class="p6"><span class="s1"><b>The right dial tells you exactly where the needle is:</b><b></b></span></p>
+<p class="p6"><span class="s1">Its digit = how far past the lower number the left needle has traveled.</span></p>
+<p class="p8"><span class="s1"></span><br></p>
+<p class="p6"><span class="s1">Right = 1 </span><span class="s3">→</span><span class="s1"> needle is 1/10 past the lower number</span></p>
+<p class="p6"><span class="s1">Right = 3 </span><span class="s3">→</span><span class="s1"> needle is 3/10 past (like above — read <b>4</b>)</span></p>
+<p class="p6"><span class="s1">Right = 9 </span><span class="s3">→</span><span class="s1"> needle is 9/10 past (almost at the next number — still read the lower)</span></p>
+<p class="p6"><span class="s1">Right = 0 </span><span class="s3">→</span><span class="s1"> needle is <i>exactly on</i> the number — read it</span></p>
+<h3 style="margin: 0.0px 0.0px 14.0px 0.0px; font: 14.0px Times; -webkit-text-stroke: #000000"><span class="s1"><b>Reading All 4 Dials</b></span></h3>
+<p class="p3"><span class="s1">Read from <b>left to right</b>. Each dial gives one digit of the 4-digit reading.</span></p>
+<p class="p8"><span class="s1"></span><br></p>
+<p class="p6"><span class="s1">Reading = —</span></p>
+<p class="p6"><span class="s1">Left dial = thousands  |  Right dial = units</span></p>
+<h3 style="margin: 0.0px 0.0px 14.0px 0.0px; font: 14.0px Times; -webkit-text-stroke: #000000"><span class="s1"><b>Try It Yourself</b></span></h3>
+<p class="p3"><span class="s1">Read this meter and enter the 4-digit number.</span></p>
+<p class="p8"><span class="s1"></span><br></p>
+<p class="p10"><span class="s2">Check</span></p>
+<p class="p8"><span class="s1"></span><br></p>
+<p class="p10"><span class="s2">Try Another</span></p>
+<p class="p11"><span class="s2">← Back</span><span class="s4"> </span><span class="s5">Next →</span></p>
+<h2 style="margin: 0.0px 0.0px 14.9px 0.0px; font: 18.0px Times; -webkit-text-stroke: #000000"><span class="s1"><b>Practice</b></span></h2>
+<p class="p6"><span class="s1">0/0</span></p>
+<p class="p8"><span class="s1"></span><br></p>
+<p class="p8"><span class="s1"></span><br></p>
+<p class="p10"><span class="s2">Submit</span></p>
+<p class="p6"><span class="s1">Pro Mode (no numbers on dials)</span></p>
+<p class="p10"><span class="s4">Entry direction: </span><span class="s2">Left → Right</span><span class="s4"> </span><span class="s2">Right → Left</span></p>
+<p class="p1"><span class="s1">👾</span></p>
+<h2 style="margin: 0.0px 0.0px 14.9px 0.0px; font: 18.0px Times; -webkit-text-stroke: #000000"><span class="s1"><b>Meter Invaders</b></span></h2>
+<p class="p3"><span class="s1">Read the gas meter at the bottom to blast the aliens before they reach the ground!</span></p>
+<ul class="ul1">
+  <li class="li6"><span class="s6"></span><span class="s7">✓</span><span class="s1"> Correct reading </span><span class="s3">→</span><span class="s1"> alien destroyed</span></li>
+  <li class="li6"><span class="s6"></span><span class="s7">✗</span><span class="s1"> Wrong answer </span><span class="s3">→</span><span class="s1"> lose a life</span></li>
+  <li class="li6"><span class="s6"></span><span class="s8">⬇</span><span class="s1"> Aliens reach the line </span><span class="s3">→</span><span class="s1"> game over</span></li>
+  <li class="li6"><span class="s6"></span><span class="s7">❤</span><span class="s1"> You have 3 lives</span></li>
+</ul>
+<p class="p10"><span class="s4">Entry direction: </span><span class="s2">Left → Right</span><span class="s4"> </span><span class="s2">Right → Left</span></p>
+<p class="p10"><span class="s2">▶ START GAME</span></p>
+<p class="p12"><span class="s1">♥</span><span class="s9"> </span><span class="s1">♥</span><span class="s9"> </span><span class="s1">♥</span></p>
+<p class="p6"><span class="s1">SCORE</span></p>
+<p class="p6"><span class="s1">0</span></p>
+<p class="p6"><span class="s1">LV 1</span></p>
+<p class="p6"><span class="s10">👾</span><span class="s1"> 10</span></p>
+<p class="p8"><span class="s1"></span><br></p>
+<p class="p8"><span class="s1"></span><br></p>
+<p class="p8"><span class="s1"></span><br></p>
+<p class="p8"><span class="s1"></span><br></p>
+<p class="p10"><span class="s2">FIRE!</span></p>
+<p class="p1"><span class="s1">💀</span></p>
+<h2 style="margin: 0.0px 0.0px 14.9px 0.0px; font: 18.0px Times; -webkit-text-stroke: #000000"><span class="s1"><b>GAME OVER</b></span></h2>
+<p class="p3"><span class="s1">Score: <b>0</b><b></b></span></p>
+<p class="p10"><span class="s2">▶ Play Again</span><span class="s4"> </span><span class="s2">Home</span></p>
+<p class="p1"><span class="s1">🏆</span></p>
+<h2 style="margin: 0.0px 0.0px 14.9px 0.0px; font: 18.0px Times; -webkit-text-stroke: #000000"><span class="s1"><b>VICTORY!</b></span></h2>
+<p class="p3"><span class="s1">All aliens destroyed!</span></p>
+<p class="p3"><span class="s1">Score: <b>0</b><b></b></span></p>
+<p class="p10"><span class="s11">💾</span><span class="s2"> Save Score</span><span class="s4"> </span><span class="s2">▶ Play Again</span></p>
+<p class="p10"><span class="s11">🏠</span><span class="s2"> Home </span><span class="s11">📖</span><span class="s2"> Learn </span><span class="s11">🎯</span><span class="s2"> Practice </span><span class="s11">👾</span><span class="s2"> Game</span></p>
 </body>
 </html>
