@@ -685,10 +685,10 @@
     const leftEdge  = gState.groupX + minCol * G_CELL_W;
     const rightEdge = gState.groupX + maxCol * G_CELL_W + G_ALIEN_W;
 
-    if (gState.dir > 0 && rightEdge >= gState.areaW * 0.65) {
+    if (gState.dir > 0 && rightEdge >= gState.areaW - 8) {
       gState.dir    = -1;
       gState.groupY += G_STEP_DOWN;
-    } else if (gState.dir < 0 && leftEdge <= gState.areaW * 0.35) {
+    } else if (gState.dir < 0 && leftEdge <= 8) {
       gState.dir    = 1;
       gState.groupY += G_STEP_DOWN;
     }
