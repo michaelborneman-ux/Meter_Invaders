@@ -186,35 +186,52 @@
     <!-- Start screen overlay -->
     <div id="game-start-screen" class="game-overlay">
       <div class="game-overlay-content">
-        <div class="game-logo-big">👾</div>
+        <div class="game-logo-big game-logo-sprite"></div>
         <h2 class="game-main-title">METER INVADERS</h2>
         <p class="game-desc">Read the gas meter at the bottom to blast the aliens before they reach the ground!</p>
         <ul class="game-rules-list">
           <li>✓ Correct reading → alien destroyed</li>
-          <li>✗ Wrong answer → lose a life</li>
+          <li>🔥 3 correct in a row → double kill</li>
+          <li>✗ Wrong answer → lose a life (misread dials are shown)</li>
           <li>⬇ Aliens reach the line → game over</li>
-          <li>♥ You have 3 lives</li>
+          <li>♥ You have 3 lives · Esc to pause</li>
+          <li>🎤 Optional: say the digits instead of typing</li>
         </ul>
+        <div class="voice-setting">
+          <label class="toggle-label">
+            <input type="checkbox" id="game-voice-toggle">
+            🎤 Voice input
+          </label>
+          <p class="voice-note" id="game-voice-note"></p>
+        </div>
         <div class="dir-toggle" style="margin-top:4px">
           <span class="dir-label">Entry direction:</span>
           <button id="game-dir-ltr" class="dir-btn active">Left → Right</button>
           <button id="game-dir-rtl" class="dir-btn">Right → Left</button>
         </div>
         <button id="btn-game-start" class="btn-game-start">▶ START GAME</button>
+        <div class="leaderboard">
+          <div class="leaderboard-title">🏆 High Scores</div>
+          <ol id="game-leaderboard" class="leaderboard-list"></ol>
+        </div>
       </div>
     </div>
 
     <!-- Active game -->
     <div id="game-screen" class="hidden">
       <div class="game-hud">
-        <div id="game-lives">
-          <span class="heart alive">♥</span>
-          <span class="heart alive">♥</span>
-          <span class="heart alive">♥</span>
+        <div class="hud-left">
+          <button id="btn-game-pause" class="btn-pause" title="Pause (Esc)">❚❚</button>
+          <div id="game-lives">
+            <span class="heart alive">♥</span>
+            <span class="heart alive">♥</span>
+            <span class="heart alive">♥</span>
+          </div>
         </div>
         <div class="hud-score">
           <div class="hud-label">SCORE</div>
           <div id="game-score-display">0</div>
+          <div id="game-streak" class="hud-streak"></div>
         </div>
         <div class="hud-right">
           <div id="game-remaining">👾 10</div>
@@ -234,7 +251,19 @@
           <input class="digit-box" id="game-d2" type="number" min="0" max="9" maxlength="1" inputmode="numeric">
           <input class="digit-box" id="game-d3" type="number" min="0" max="9" maxlength="1" inputmode="numeric">
           <button id="btn-game-fire" class="btn-fire">FIRE!</button>
+          <button id="btn-game-mic" class="btn-mic" title="Voice input">🎤</button>
         </div>
+        <div class="voice-status hidden" id="game-voice-status"></div>
+      </div>
+    </div>
+
+    <!-- Pause overlay -->
+    <div id="game-pause-screen" class="game-overlay hidden">
+      <div class="game-overlay-content">
+        <h2 class="game-main-title">PAUSED</h2>
+        <p class="game-desc">Press Esc or Resume to keep playing — or say “resume” if voice is on.</p>
+        <button id="btn-game-resume" class="btn-game-start">▶ Resume</button>
+        <button id="btn-game-quit" class="btn-secondary">Quit Game</button>
       </div>
     </div>
 
@@ -243,7 +272,12 @@
       <div class="game-overlay-content">
         <div class="game-logo-big">💀</div>
         <h2 class="game-over-title">GAME OVER</h2>
+        <p class="game-desc" id="game-over-reason"></p>
         <p class="final-score-line">Score: <strong id="game-over-score">0</strong></p>
+        <div class="game-summary" id="game-over-summary"></div>
+        <input class="name-input" id="over-name-input" type="text" placeholder="Enter your name…" maxlength="20">
+        <button id="btn-save-over" class="btn-primary" style="width:100%">💾 Save Score</button>
+        <p class="save-status" id="over-save-status"></p>
         <button id="btn-game-retry" class="btn-game-start">▶ Play Again</button>
         <button id="btn-game-home" class="btn-secondary">Home</button>
       </div>
@@ -256,8 +290,10 @@
         <h2 class="victory-title">VICTORY!</h2>
         <p class="game-desc">All aliens destroyed!</p>
         <p class="final-score-line">Score: <strong id="game-victory-score">0</strong></p>
-        <input class="name-input" id="game-name-input" type="text" placeholder="Enter your name…" maxlength="20">
-        <button id="btn-save-game-score" class="btn-primary" style="width:100%">💾 Save Score</button>
+        <div class="game-summary" id="game-victory-summary"></div>
+        <input class="name-input" id="victory-name-input" type="text" placeholder="Enter your name…" maxlength="20">
+        <button id="btn-save-victory" class="btn-primary" style="width:100%">💾 Save Score</button>
+        <p class="save-status" id="victory-save-status"></p>
         <button id="btn-game-retry2" class="btn-game-start" style="margin-top:4px">▶ Play Again</button>
       </div>
     </div>
