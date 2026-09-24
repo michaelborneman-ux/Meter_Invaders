@@ -220,7 +220,7 @@ body::before {
 .dials-row {
   display: flex;
   justify-content: center;
-  gap: 6px;
+  gap: 4px;
   flex-shrink: 0;
   margin: 8px 0;
 }
@@ -711,8 +711,9 @@ body::before {
 
 /* ── Meter section (below game area) ── */
 .game-meter-section {
+  position: relative;
   flex-shrink: 0;
-  padding: 6px 12px 8px;
+  padding: 6px 8px 8px;
   background: var(--surface);
   border-top: 1px solid rgba(255,255,255,0.08);
 }
@@ -849,3 +850,15 @@ body::before {
 }
 .voice-status.hidden { display: none; }
 .voice-status.vs-error { color: var(--red); }
+
+/* Game feedback floats above the meter so it doesn't shift the play area */
+#game-feedback {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 100%;
+  margin: 0 0 8px;
+  z-index: 11;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}

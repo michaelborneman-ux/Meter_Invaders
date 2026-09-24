@@ -7,11 +7,13 @@
   //  Constants
   // ══════════════════════════════════════════════════════════
 
-  const VERSION = 'v1.6.1';
+  const VERSION = 'v1.6.2';
 
   const DIAL_CLOCKWISE = [false, true, false, true];
   const DIAL_LABELS = ['×1000', '×100', '×10', '×1'];
-  const DIAL_SIZE = Math.min(Math.floor((Math.min(window.innerWidth, 420) - 56) / 4), 82);
+  const DIAL_GAP = 4;       // must match .dials-row gap in styles.css
+  const DIAL_MIN = 56;
+  const DIAL_MAX = 120;
 
   const LS_GAME_SCORES = 'mrt-game-scores';
   const LS_LAST_NAME = 'mrt-last-name';
@@ -251,9 +253,12 @@
   // ══════════════════════════════════════════════════════════
 
   function drawDial(canvas, value, clockwise, proMode) {
-    const size = canvas.width;
+    // Draw in CSS pixels; the canvas backing store may be larger for sharp phone screens
+    const dpr = canvas._dpr || 1;
+    const size = canvas.width / dpr;
     const cx = size / 2, cy = size / 2, r = size / 2 - 2;
     const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, size, size);
 
     ctx.fillStyle = '#ffffff';
@@ -285,9 +290,9 @@
       }
 
       if (!proMode) {
-        const textR = r - 18;
+        const textR = r - size * 0.23;
         ctx.fillStyle = '#111';
-        ctx.font = `bold ${Math.round(size * 0.14)}px -apple-system, sans-serif`;
+        ctx.font = `bold ${Math.round(size * 0.16)}px -apple-system, sans-serif`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText(String(digit),
           cx + Math.cos(angle) * textR,
@@ -316,15 +321,30 @@
     ctx.beginPath(); ctx.arc(cx, cy, size * 0.055, 0, Math.PI * 2); ctx.fill();
   }
 
+  // Size a canvas in CSS pixels, with a high-resolution backing store
+  function sizeCanvas(canvas, size) {
+    const dpr = Math.min(window.devicePixelRatio || 1, 3);
+    canvas.width = canvas.height = Math.round(size * dpr);
+    canvas.style.width = canvas.style.height = size + 'px';
+    canvas._dpr = dpr;
+  }
+
+  // Four dials fill the row's width, within sensible limits
+  function dialSizeFor(container) {
+    const avail = container.clientWidth || Math.min(window.innerWidth, 600) - 32;
+    return Math.max(DIAL_MIN, Math.min(Math.floor((avail - 3 * DIAL_GAP) / 4), DIAL_MAX));
+  }
+
   function renderDials(containerId, values, proMode) {
     const container = document.getElementById(containerId);
     container.innerHTML = '';
+    const dialSize = dialSizeFor(container);
     values.forEach((val, i) => {
       const wrap = document.createElement('div');
       wrap.className = 'dial-wrap';
 
       const canvas = document.createElement('canvas');
-      canvas.width = canvas.height = DIAL_SIZE;
+      sizeCanvas(canvas, dialSize);
       drawDial(canvas, val, DIAL_CLOCKWISE[i], proMode);
 
       const lbl = document.createElement('div');
@@ -456,7 +476,7 @@
     if (!wrap) return;
     wrap.innerHTML = '';
     const canvas = document.createElement('canvas');
-    canvas.width = canvas.height = size;
+    sizeCanvas(canvas, size);
     drawDial(canvas, value, clockwise, proMode);
     wrap.appendChild(canvas);
   }
@@ -960,6 +980,19 @@
     syncVoice();
   }
 
+  function measureGameArea() {
+    if (!gState) return;
+    const area = document.getElementById('game-area');
+    const areaW = area.clientWidth;
+    const areaH = area.clientHeight;
+    if (!areaW || !areaH) return;
+    gState.areaW = areaW;
+    gState.groundY = Math.max(areaH, 160) - 4;
+    Object.assign(gState, paceScale(gState.areaW, gState.groundY));
+    const laserCanvas = document.getElementById('laser-canvas');
+    if (laserCanvas) { laserCanvas.width = areaW; laserCanvas.height = areaH; }
+  }
+
   // How this screen's play area compares to the reference one
   function paceScale(areaW, groundY) {
     const gridW = G_COLS * G_CELL_W - G_GAP_X;
@@ -995,6 +1028,7 @@
     buildAlienGrid();
     pickTarget();
     renderGameMeter();
+    measureGameArea();   // the meter's height is only known once it is drawn
     resetGameInputs();
     updateHUD();
     if (!gState.paused) gState.animId = requestAnimationFrame(gameLoop);
@@ -1809,6 +1843,21 @@
       if (document.hidden) pauseGame();
       syncVoice();
     });
+
+    // ── Screen size changes (window resize, phone rotation) ───
+    let resizeTimer = null;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        if (isGameRunning()) renderGameMeter();
+        if (pracState.values && document.getElementById('view-practice').classList.contains('active')) {
+          renderDials('practice-dials', pracState.values, document.getElementById('prac-pro').checked);
+        }
+      }, 150);
+    });
+    if (window.ResizeObserver) {
+      new ResizeObserver(measureGameArea).observe(document.getElementById('game-area'));
+    }
 
     // ── Voice input ───────────────────────────────────────────
     voice.enabled = voice.supported && voiceLoadEnabled();
