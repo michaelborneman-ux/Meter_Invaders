@@ -74,6 +74,16 @@ body::before {
 }
 .view.active { display: flex; flex-direction: column; }
 
+/* On wide screens, reading screens sit in a centered column; the game stays full width */
+#view-home > *,
+#view-learn > *,
+#view-practice > * {
+  width: 100%;
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 /* ════════════════════════════════════════════════════════════
    Bottom Navigation
    ════════════════════════════════════════════════════════════ */
@@ -233,13 +243,13 @@ body::before {
 }
 
 .dial-label {
-  font-size: 9px;
+  font-size: 11px;
   color: var(--muted);
   letter-spacing: 0.3px;
 }
 
 .dial-dir-badge {
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
   color: var(--accent);
   background: rgba(245,166,35,0.12);
@@ -428,15 +438,36 @@ body::before {
    ════════════════════════════════════════════════════════════ */
 #view-practice { gap: 4px; }
 
-.prac-stats {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text);
+.prac-options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
 }
-.stat-correct { color: var(--green); }
-.stat-sep     { color: var(--muted); margin: 0 2px; }
 
-.prac-options { margin-top: 10px; display: flex; flex-direction: column; gap: 10px; }
+/* Session stats */
+.prac-stats-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin: 10px 0 4px;
+}
+.prac-stat {
+  background: var(--surface);
+  border-radius: 10px;
+  padding: 8px 4px;
+  text-align: center;
+}
+.prac-stat-value {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.prac-stat-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
 .toggle-label {
   display: flex;
   align-items: center;

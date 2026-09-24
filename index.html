@@ -61,7 +61,7 @@
       <!-- Step 0: What is a gas meter? -->
       <div id="learn-step-0" class="learn-step active">
         <h3>What is a Gas Meter?</h3>
-        <p>A gas meter measures how much natural gas flows through it. It tracks total usage in cubic feet.</p>
+        <p>A gas meter measures how much natural gas flows through it. It tracks total usage in <strong>cubic feet</strong> — older dial meters like these were installed before Canada switched to metric.</p>
         <p>Your job as a meter reader is to record the <strong>4-digit number</strong> shown on the dials — accurately, every time.</p>
         <div class="learn-callout">
           The 4 dials together give you the reading.<br>
@@ -152,25 +152,16 @@
   <div id="view-practice" class="view">
     <div class="view-topbar">
       <h2>Practice</h2>
-      <div class="prac-stats">
-        <span class="stat-correct" id="prac-correct">0</span>
-        <span class="stat-sep">/</span>
-        <span id="prac-total">0</span>
-      </div>
     </div>
-    <div class="dials-row" id="practice-dials"></div>
-    <div class="input-row">
-      <input class="digit-box" id="prac-d0" type="number" min="0" max="9" maxlength="1" inputmode="numeric">
-      <input class="digit-box" id="prac-d1" type="number" min="0" max="9" maxlength="1" inputmode="numeric">
-      <input class="digit-box" id="prac-d2" type="number" min="0" max="9" maxlength="1" inputmode="numeric">
-      <input class="digit-box" id="prac-d3" type="number" min="0" max="9" maxlength="1" inputmode="numeric">
-    </div>
-    <div class="feedback-bar hidden" id="prac-feedback"><span id="prac-fb-msg"></span></div>
-    <button id="btn-prac-submit" class="btn-primary" style="width:100%;margin-top:4px">Submit</button>
+
     <div class="prac-options">
       <label class="toggle-label">
         <input type="checkbox" id="prac-pro">
         Pro Mode (no numbers on dials)
+      </label>
+      <label class="toggle-label">
+        <input type="checkbox" id="prac-voice-toggle">
+        🎤 Voice input
       </label>
       <div class="dir-toggle">
         <span class="dir-label">Entry direction:</span>
@@ -178,6 +169,37 @@
         <button id="prac-dir-rtl" class="dir-btn">Right → Left</button>
       </div>
     </div>
+
+    <div class="prac-stats-bar">
+      <div class="prac-stat">
+        <div class="prac-stat-value" id="prac-accuracy">—</div>
+        <div class="prac-stat-label" id="prac-accuracy-detail">Accuracy</div>
+      </div>
+      <div class="prac-stat">
+        <div class="prac-stat-value" id="prac-streak">0</div>
+        <div class="prac-stat-label">Streak</div>
+      </div>
+      <div class="prac-stat">
+        <div class="prac-stat-value" id="prac-best">0</div>
+        <div class="prac-stat-label">Best streak</div>
+      </div>
+      <div class="prac-stat">
+        <div class="prac-stat-value" id="prac-missed">—</div>
+        <div class="prac-stat-label">Most missed</div>
+      </div>
+    </div>
+
+    <div class="dials-row" id="practice-dials"></div>
+    <div class="input-row">
+      <input class="digit-box" id="prac-d0" type="number" min="0" max="9" maxlength="1" inputmode="numeric">
+      <input class="digit-box" id="prac-d1" type="number" min="0" max="9" maxlength="1" inputmode="numeric">
+      <input class="digit-box" id="prac-d2" type="number" min="0" max="9" maxlength="1" inputmode="numeric">
+      <input class="digit-box" id="prac-d3" type="number" min="0" max="9" maxlength="1" inputmode="numeric">
+      <button id="btn-prac-mic" class="btn-mic" title="Voice input">🎤</button>
+    </div>
+    <div class="voice-status hidden" id="prac-voice-status"></div>
+    <div class="feedback-bar hidden" id="prac-feedback"><span id="prac-fb-msg"></span></div>
+    <button id="btn-prac-submit" class="btn-primary" style="width:100%;margin-top:4px">Submit</button>
   </div>
 
   <!-- ── Game ───────────────────────────────────────────── -->

@@ -7,7 +7,7 @@
   //  Constants
   // ══════════════════════════════════════════════════════════
 
-  const VERSION = 'v1.7.1';
+  const VERSION = 'v1.8.0';
 
   const DIAL_CLOCKWISE = [false, true, false, true];
   const DIAL_LABELS = ['×1000', '×100', '×10', '×1'];
@@ -351,7 +351,7 @@
       ctx.strokeStyle = '#333'; ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.moveTo(cx + Math.cos(angle) * (r - 2), cy + Math.sin(angle) * (r - 2));
-      ctx.lineTo(cx + Math.cos(angle) * (r - 10), cy + Math.sin(angle) * (r - 10));
+      ctx.lineTo(cx + Math.cos(angle) * (r - 2 - size * 0.07), cy + Math.sin(angle) * (r - 2 - size * 0.07));
       ctx.stroke();
 
       for (let sub = 1; sub < 5; sub++) {
@@ -361,14 +361,15 @@
         ctx.strokeStyle = '#bbb'; ctx.lineWidth = 0.8;
         ctx.beginPath();
         ctx.moveTo(cx + Math.cos(sa) * (r - 2), cy + Math.sin(sa) * (r - 2));
-        ctx.lineTo(cx + Math.cos(sa) * (r - 7), cy + Math.sin(sa) * (r - 7));
+        ctx.lineTo(cx + Math.cos(sa) * (r - 2 - size * 0.04), cy + Math.sin(sa) * (r - 2 - size * 0.04));
         ctx.stroke();
       }
 
       if (!proMode) {
-        const textR = r - size * 0.23;
+        // Numbers sit just inside the ticks so neighbours (e.g. "1 0 9") don't crowd
+        const textR = r - size * 0.17;
         ctx.fillStyle = '#111';
-        ctx.font = `bold ${Math.round(size * 0.16)}px -apple-system, sans-serif`;
+        ctx.font = `bold ${Math.round(size * 0.14)}px -apple-system, sans-serif`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText(String(digit),
           cx + Math.cos(angle) * textR,
@@ -376,25 +377,35 @@
       }
     }
 
-    // Needle
+    // Needle — bold, dark-edged and drop-shadowed so it stands out over the numbers
     const frac = (value % 10) / 10;
     const needleFrac = clockwise ? frac : 1 - frac;
     const needleAngle = needleFrac * Math.PI * 2 - Math.PI / 2;
-    const needleLen = r - 14;
-    const tailLen = r * 0.18;
+    const needleLen = r * 0.56;   // tip stops just short of the numbers so they stay readable
+    const tailLen = r * 0.2;
     const perpAngle = needleAngle + Math.PI / 2;
-    const baseW = size * 0.045;
+    const baseW = size * 0.06;
 
-    ctx.fillStyle = '#e94560';
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.35)';
+    ctx.shadowBlur = size * 0.04;
+    ctx.shadowOffsetY = size * 0.015;
+    ctx.fillStyle = '#d4142f';
+    ctx.strokeStyle = '#5c0010';
+    ctx.lineWidth = Math.max(1, size * 0.012);
+    ctx.lineJoin = 'round';
     ctx.beginPath();
     ctx.moveTo(cx + Math.cos(needleAngle) * needleLen, cy + Math.sin(needleAngle) * needleLen);
     ctx.lineTo(cx + Math.cos(perpAngle) * baseW, cy + Math.sin(perpAngle) * baseW);
     ctx.lineTo(cx - Math.cos(needleAngle) * tailLen, cy - Math.sin(needleAngle) * tailLen);
     ctx.lineTo(cx - Math.cos(perpAngle) * baseW, cy - Math.sin(perpAngle) * baseW);
-    ctx.closePath(); ctx.fill();
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.restore();
 
-    ctx.fillStyle = '#333';
-    ctx.beginPath(); ctx.arc(cx, cy, size * 0.055, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#222';
+    ctx.beginPath(); ctx.arc(cx, cy, size * 0.07, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#888';
+    ctx.beginPath(); ctx.arc(cx, cy, size * 0.025, 0, Math.PI * 2); ctx.fill();
   }
 
   // Size a canvas in CSS pixels, with a high-resolution backing store
@@ -430,6 +441,8 @@
       const badge = document.createElement('div');
       badge.className = 'dial-dir-badge';
       badge.textContent = DIAL_CLOCKWISE[i] ? 'CW' : 'CCW';
+      // Real meters aren't labelled — Pro Mode drops this crutch too
+      if (proMode) badge.style.visibility = 'hidden';
 
       wrap.appendChild(canvas);
       wrap.appendChild(lbl);
@@ -457,8 +470,12 @@
   // ══════════════════════════════════════════════════════════
 
   // getDirFn: optional function returning 'ltr' or 'rtl'
-  function makeDigitCtrl(prefix, onComplete, getDirFn) {
+  function makeDigitCtrl(prefix, onComplete, getDirFn, skipAutoFocus) {
     const inputs = [0, 1, 2, 3].map(i => document.getElementById(`${prefix}-d${i}`));
+    const autoFocus = () => {
+      if (skipAutoFocus && skipAutoFocus()) return;
+      setTimeout(() => orderedInputs()[0].focus(), 80);
+    };
 
     function orderedInputs() {
       return getDirFn && getDirFn() === 'rtl' ? [...inputs].reverse() : inputs;
@@ -492,7 +509,7 @@
     });
 
     return {
-      focus: () => setTimeout(() => orderedInputs()[0].focus(), 80),
+      focus: autoFocus,
       getAnswer: () => inputs.map(inp => inp.value).join(''), // always LTR (d0–d3)
       reset: () => {
         inputs.forEach(inp => {
@@ -500,7 +517,7 @@
           inp.classList.remove('correct', 'wrong');
           inp.readOnly = false;
         });
-        setTimeout(() => orderedInputs()[0].focus(), 80);
+        autoFocus();
       },
       markResult: answer => {
         inputs.forEach((inp, i) => {
@@ -604,6 +621,8 @@
 
   let pracState = {
     correct: 0, total: 0,
+    streak: 0, bestStreak: 0,
+    dialMisses: [0, 0, 0, 0],
     values: null, answer: null,
     submitted: false,
     ctrl: null,
@@ -615,6 +634,9 @@
   function initPractice() {
     pracState.correct = 0;
     pracState.total = 0;
+    pracState.streak = 0;
+    pracState.bestStreak = 0;
+    pracState.dialMisses = [0, 0, 0, 0];
     pracState.submitted = false;
     updatePracStats();
     nextPracQuestion();
@@ -628,6 +650,8 @@
     renderDials('practice-dials', pracState.values, proMode);
     document.getElementById('prac-feedback').className = 'feedback-bar hidden';
     pracState.ctrl.reset();
+    voiceClearPending();
+    renderVoiceStatus();
   }
 
   function submitPrac() {
@@ -638,27 +662,51 @@
 
     const correct = answer === pracState.answer;
     pracState.total++;
-    if (correct) pracState.correct++;
-    updatePracStats();
     pracState.ctrl.markResult(pracState.answer);
 
     const fb = document.getElementById('prac-feedback');
     const msg = document.getElementById('prac-fb-msg');
     if (correct) {
+      pracState.correct++;
+      pracState.streak++;
+      pracState.bestStreak = Math.max(pracState.bestStreak, pracState.streak);
       playCorrectSound();
       fb.className = 'feedback-bar correct-fb';
       msg.textContent = `Correct! Reading: ${pracState.answer}`;
     } else {
+      pracState.streak = 0;
+      const missed = [0, 1, 2, 3].filter(i => answer[i] !== pracState.answer[i]);
+      missed.forEach(i => pracState.dialMisses[i]++);
+      document.querySelectorAll('#practice-dials .dial-wrap').forEach((wrap, i) => {
+        wrap.classList.toggle('dial-miss', missed.includes(i));
+      });
       playWrongSound();
       fb.className = 'feedback-bar wrong-fb';
-      msg.textContent = `Wrong. Correct reading: ${pracState.answer}`;
+      msg.textContent = `Wrong. Correct reading: ${pracState.answer} — ${missedDialsHint(missed)}`;
     }
-    setTimeout(nextPracQuestion, 1500);
+    updatePracStats();
+    // Leave a miss on screen longer so the ringed dials can be studied
+    setTimeout(nextPracQuestion, correct ? 1200 : 2500);
   }
 
   function updatePracStats() {
-    document.getElementById('prac-correct').textContent = pracState.correct;
-    document.getElementById('prac-total').textContent = pracState.total;
+    const s = pracState;
+    document.getElementById('prac-accuracy').textContent =
+      s.total ? Math.round(100 * s.correct / s.total) + '%' : '—';
+    document.getElementById('prac-accuracy-detail').textContent =
+      s.total ? `${s.correct}/${s.total} correct` : 'Accuracy';
+    document.getElementById('prac-streak').textContent = s.streak ? '🔥 ' + s.streak : '0';
+    document.getElementById('prac-best').textContent = s.bestStreak;
+    const maxMiss = Math.max(...s.dialMisses);
+    document.getElementById('prac-missed').textContent = maxMiss
+      ? s.dialMisses.map((n, i) => (n === maxMiss ? DIAL_LABELS[i] : null)).filter(Boolean).join(' ')
+      : '—';
+  }
+
+  // "check the ×100 dial" / "check the ×100, ×10 dials"
+  function missedDialsHint(missed) {
+    const names = missed.map(i => DIAL_LABELS[i]);
+    return names.length === 1 ? `check the ${names[0]} dial` : `check the ${names.join(', ')} dials`;
   }
 
   // ══════════════════════════════════════════════════════════
@@ -1253,9 +1301,13 @@
     renderDials('game-dials', gState.reading, gState.proMode);
   }
 
+  // On phones with voice on, don't pop up the keyboard (and its own dictation mic)
+  function voiceOnPhone() {
+    return voice.enabled && window.matchMedia('(pointer: coarse)').matches;
+  }
+
   function focusFirstGameInput() {
-    // On phones with voice on, don't pop up the keyboard (and its own dictation mic)
-    if (voice.enabled && window.matchMedia('(pointer: coarse)').matches) return;
+    if (voiceOnPhone()) return;
     setTimeout(() => {
       const firstId = gameDir === 'rtl' ? 'game-d3' : 'game-d0';
       const d = document.getElementById(firstId);
@@ -1396,10 +1448,7 @@
       markGameMiss(g.answer, missed);
       playWrongSound();
 
-      const names = missed.map(i => DIAL_LABELS[i]);
-      const hint = names.length === 1
-        ? `check the ${names[0]} dial`
-        : `check the ${names.join(', ')} dials`;
+      const hint = missedDialsHint(missed);
 
       if (g.bonusRound) {
         showGameFeedback(false, `BONUS OVER! Correct: ${g.answer} — ${hint}`, G_MISS_REVIEW_MS);
@@ -1549,29 +1598,53 @@
     return document.getElementById('view-game').classList.contains('active');
   }
 
-  // Listen only while a game is on screen
+  function practiceViewActive() {
+    return document.getElementById('view-practice').classList.contains('active');
+  }
+
+  // Where spoken digits go: the Practice screen or a running game
+  function voiceTarget() {
+    if (practiceViewActive()) return 'practice';
+    if (gameViewActive() && isGameRunning()) return 'game';
+    return null;
+  }
+
+  // Listen only while Practice or a game is on screen
   function syncVoice() {
-    voiceSetWanted(voice.enabled && isGameRunning() && gameViewActive() && !document.hidden);
+    voiceSetWanted(voice.enabled && !!voiceTarget() && !document.hidden);
     updateVoiceControls();
   }
 
+  // Start the mic inside a tap that opens Practice (required on iPhone)
+  function voiceStartForPractice() {
+    if (!voice.enabled) return;
+    voice.wanted = true;
+    voiceRestartNow();
+  }
+
   function updateVoiceControls() {
-    document.getElementById('game-voice-toggle').checked = voice.enabled;
-    const mic = document.getElementById('btn-game-mic');
-    mic.classList.toggle('mic-on', voice.enabled);
-    mic.classList.toggle('listening', voice.enabled && voiceState === 'listening');
-    mic.title = voice.enabled ? 'Voice input on — click to turn off' : 'Voice input off — click to turn on';
+    ['game-voice-toggle', 'prac-voice-toggle'].forEach(id => {
+      document.getElementById(id).checked = voice.enabled;
+    });
+    ['btn-game-mic', 'btn-prac-mic'].forEach(id => {
+      const mic = document.getElementById(id);
+      mic.classList.toggle('mic-on', voice.enabled);
+      mic.classList.toggle('listening', voice.enabled && voiceState === 'listening');
+      mic.title = voice.enabled ? 'Voice input on — click to turn off' : 'Voice input off — click to turn on';
+    });
     renderVoiceStatus();
   }
 
   function renderVoiceStatus(heard) {
-    const el = document.getElementById('game-voice-status');
-    el.classList.toggle('hidden', !voice.enabled && voiceState !== 'error');
-    el.classList.toggle('vs-error', voiceState === 'error');
-    if (voiceState === 'error') el.textContent = '⚠ ' + voiceMsg;
-    else if (heard) el.textContent = `🎤 Heard: “${heard}”`;
-    else if (voiceState === 'listening') el.textContent = '🎤 Listening… (tap here if it stops hearing you)';
-    else el.textContent = '🎤 Starting microphone…';
+    ['game-voice-status', 'prac-voice-status'].forEach(id => {
+      const el = document.getElementById(id);
+      el.classList.toggle('hidden', !voice.enabled && voiceState !== 'error');
+      el.classList.toggle('vs-error', voiceState === 'error');
+      if (voiceState === 'error') el.textContent = '⚠ ' + voiceMsg;
+      else if (heard) el.textContent = `🎤 Heard: “${heard}”`;
+      else if (voiceState === 'listening') el.textContent = '🎤 Listening… (tap here if it stops hearing you)';
+      else el.textContent = '🎤 Starting microphone…';
+    });
     const note = document.getElementById('game-voice-note');
     if (!voice.supported) note.textContent = 'Voice input needs Chrome, Edge or Safari.';
     else if (voiceState === 'error') note.textContent = voiceMsg;
@@ -1583,16 +1656,16 @@
   function setVoiceEnabledFromUser(on) {
     voiceSetEnabled(on);
     voiceState = 'off';
-    if (voice.enabled && !isGameRunning()) {
+    if (voice.enabled && voiceTarget()) {
+      voice.wanted = true;
+      voiceRestartNow();
+    } else if (voice.enabled) {
       // Ask for microphone permission now rather than mid-game
       voice.probing = true;
       voiceRestartNow();
-    } else if (voice.enabled && gameViewActive()) {
-      voice.wanted = true;
-      voiceRestartNow();
     }
     syncVoice();
-    if (isGameRunning() && !gState.paused) focusFirstGameInput();
+    if (voiceTarget() === 'game' && !gState.paused) focusFirstGameInput();
   }
 
   voiceHooks.onState = (state, msg) => {
@@ -1610,12 +1683,13 @@
   };
 
   voiceHooks.onHeard = text => {
-    if (!isGameRunning()) return;
+    if (!voiceTarget()) return;
     if (voiceState === 'error') voiceState = 'listening';
     renderVoiceStatus(text.trim());
   };
 
   voiceHooks.onDigits = digits => {
+    if (voiceTarget() === 'practice') return practiceVoiceDigits(digits);
     if (!digits || !gState || gState.ended || gState.paused || gState.submitting || gState.inTransition) return false;
     // Spoken order follows the chosen entry direction, just like typing
     const order = gameDir === 'rtl' ? [3, 2, 1, 0] : [0, 1, 2, 3];
@@ -1629,7 +1703,27 @@
     return false;
   };
 
+  function practiceVoiceDigits(digits) {
+    if (!digits || pracState.submitted) return false;
+    const order = pracState.dir === 'rtl' ? [3, 2, 1, 0] : [0, 1, 2, 3];
+    order.forEach((idx, pos) => {
+      document.getElementById(`prac-d${idx}`).value = digits[pos] || '';
+    });
+    if (digits.length >= 4) {
+      submitPrac();
+      return true;
+    }
+    return false;
+  }
+
   voiceHooks.onCommand = cmd => {
+    if (voiceTarget() === 'practice') {
+      if (cmd === 'clear' && !pracState.submitted) {
+        [0, 1, 2, 3].forEach(i => { document.getElementById(`prac-d${i}`).value = ''; });
+        renderVoiceStatus();
+      }
+      return;
+    }
     if (!isGameRunning()) return;
     if (cmd === 'pause') pauseGame();
     else if (cmd === 'resume' && gameViewActive()) resumeGame();
@@ -1818,6 +1912,7 @@
         }
         if (view === 'view-practice') {
           showView(view);
+          voiceStartForPractice();
           initPractice();
           return;
         }
@@ -1837,6 +1932,7 @@
     });
     document.getElementById('btn-home-practice').addEventListener('click', () => {
       showView('view-practice');
+      voiceStartForPractice();
       initPractice();
     });
     document.getElementById('btn-home-game').addEventListener('click', enterGameView);
@@ -1854,7 +1950,7 @@
     });
 
     // ── Practice ──────────────────────────────────────────────
-    pracState.ctrl = makeDigitCtrl('prac', submitPrac, () => pracState.dir);
+    pracState.ctrl = makeDigitCtrl('prac', submitPrac, () => pracState.dir, voiceOnPhone);
     document.getElementById('btn-prac-submit').addEventListener('click', submitPrac);
     document.getElementById('prac-pro').addEventListener('change', () => {
       if (pracState.values) {
@@ -1980,14 +2076,22 @@
     micBtn.classList.toggle('hidden', !voice.supported);
     micBtn.addEventListener('click', () => setVoiceEnabledFromUser(!voice.enabled));
     // Tapping the status line restarts the mic if it has stopped hearing
-    document.getElementById('game-voice-status').addEventListener('click', () => {
-      if (!voice.enabled || !isGameRunning()) return;
-      voiceState = 'off';
-      renderVoiceStatus();
-      voice.wanted = true;
-      voiceRestartNow();
-      focusFirstGameInput();
+    ['game-voice-status', 'prac-voice-status'].forEach(id => {
+      document.getElementById(id).addEventListener('click', () => {
+        if (!voice.enabled || !voiceTarget()) return;
+        voiceState = 'off';
+        renderVoiceStatus();
+        voice.wanted = true;
+        voiceRestartNow();
+        if (voiceTarget() === 'game') focusFirstGameInput();
+      });
     });
+    const pracVoiceToggle = document.getElementById('prac-voice-toggle');
+    pracVoiceToggle.disabled = !voice.supported;
+    pracVoiceToggle.addEventListener('change', () => setVoiceEnabledFromUser(pracVoiceToggle.checked));
+    const pracMic = document.getElementById('btn-prac-mic');
+    pracMic.classList.toggle('hidden', !voice.supported);
+    pracMic.addEventListener('click', () => setVoiceEnabledFromUser(!voice.enabled));
     updateVoiceControls();
     window.addEventListener('blur', pauseGame);
 
