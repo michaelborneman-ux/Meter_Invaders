@@ -7,7 +7,7 @@
   //  Constants
   // ══════════════════════════════════════════════════════════
 
-  const VERSION = 'v1.6.4';
+  const VERSION = 'v1.7.0';
 
   const DIAL_CLOCKWISE = [false, true, false, true];
   const DIAL_LABELS = ['×1000', '×100', '×10', '×1'];
@@ -162,26 +162,48 @@
       echo.start(t + 0.18); echo.stop(t + 0.6);
     } catch (_) {}
 
-    // Speech synthesis — less pitch distortion sounds more human.
-    // Skipped while voice input is on: on iPhone, speaking can leave the mic deaf.
-    if (voice.enabled) return;
-    try {
-      const ss = window.speechSynthesis;
-      if (!ss) return;
-      if (ss.speaking || ss.pending) ss.cancel();
-      const utter = new SpeechSynthesisUtterance('Bonus Round');
-      utter.pitch  = 0.75;  // 0.2 sounds garbled; 0.75 keeps depth but sounds human
-      utter.rate   = 0.78;
-      utter.volume = 1;
-      utter.onerror = () => {};
-      const voices = ss.getVoices();
-      // Prefer naturally deep/rich English voices
-      const pick = voices.find(v => /\b(daniel|alex|reed|liam|arthur|oliver|aaron)\b/i.test(v.name))
-                || voices.find(v => /en/i.test(v.lang))
-                || voices[0];
-      if (pick) utter.voice = pick;
-      ss.speak(utter);
-    } catch (_) {}
+    // "Bonus Round" announcer voice
+    loadSound(BONUS_VOICE_URL).then(playAnnouncer).catch(() => { });
+  }
+
+  // Recorded with the macOS "Daniel" voice, then roughened at play time into an
+  // arena-style announcer (settings picked by ear on a test page)
+  const BONUS_VOICE_URL = './bonus-round.wav';
+  const ANNOUNCER = { pitch: 0.90, grit: 0.10, echo: 0.05 };
+
+  function playAnnouncer(buf) {
+    const ctx = getAudioCtx();
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.playbackRate.value = ANNOUNCER.pitch;   // lower and slower
+
+    const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 70;
+    const pre = ctx.createGain(); pre.gain.value = 1 + ANNOUNCER.grit * 2;
+    const shaper = ctx.createWaveShaper();     // soft saturation for grit
+    const k = ANNOUNCER.grit * 40, n = 1024, curve = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      const x = i / (n - 1) * 2 - 1;
+      curve[i] = (1 + k) * x / (1 + k * Math.abs(x));
+    }
+    shaper.curve = curve;
+    const low = ctx.createBiquadFilter(); low.type = 'lowshelf'; low.frequency.value = 180; low.gain.value = 7;
+    const presence = ctx.createBiquadFilter(); presence.type = 'peaking';
+    presence.frequency.value = 2500; presence.Q.value = 1; presence.gain.value = 4;
+    const comp = ctx.createDynamicsCompressor();
+    comp.threshold.value = -26; comp.ratio.value = 8; comp.attack.value = 0.003; comp.release.value = 0.25;
+    const master = ctx.createGain(); master.gain.value = 0.9;
+
+    src.connect(hp); hp.connect(pre); pre.connect(shaper); shaper.connect(low);
+    low.connect(presence); presence.connect(comp); comp.connect(master);
+
+    // Slap-back echo off the arena walls
+    const delay = ctx.createDelay(1); delay.delayTime.value = 0.13;
+    const fb = ctx.createGain(); fb.gain.value = ANNOUNCER.echo;
+    const tone = ctx.createBiquadFilter(); tone.type = 'lowpass'; tone.frequency.value = 2200;
+    comp.connect(delay); delay.connect(tone); tone.connect(fb); fb.connect(delay); tone.connect(master);
+
+    master.connect(ctx.destination);
+    src.start(ctx.currentTime + 0.05);
   }
 
   function playGameOverSound() {
@@ -221,26 +243,38 @@
   // Played through Web Audio rather than an <audio> element: on iPhone, <audio>
   // playback can leave speech recognition listening but deaf afterwards.
   const WRONG_SOUND_URL = './wrong-answer-sound-effect.mp3';
-  const _wrongBytes = fetch(WRONG_SOUND_URL).then(r => r.arrayBuffer()).catch(() => null);
-  let _wrongBuffer = null;
   let _wrongAudio = null;   // fallback when fetch isn't available (page opened as a file)
 
   function playWrongSound() {
     try {
       if (navigator.vibrate) navigator.vibrate(200);
-      if (_wrongBuffer) { playBuffer(_wrongBuffer); return; }
-      _wrongBytes
-        .then(bytes => {
-          if (!bytes) throw new Error('no sound data');
-          return getAudioCtx().decodeAudioData(bytes.slice(0));
-        })
-        .then(buf => { _wrongBuffer = buf; playBuffer(buf); })
+      loadSound(WRONG_SOUND_URL)
+        .then(playBuffer)
         .catch(() => {
           if (!_wrongAudio) _wrongAudio = new Audio(WRONG_SOUND_URL);
           _wrongAudio.currentTime = 0;
           _wrongAudio.play().catch(() => { });
         });
     } catch (_) { }
+  }
+
+  // Sound files are downloaded up front and decoded once on first use
+  const _soundBytes = {};
+  const _soundBuffers = {};
+
+  function prefetchSound(url) {
+    if (!_soundBytes[url]) _soundBytes[url] = fetch(url).then(r => r.arrayBuffer()).catch(() => null);
+  }
+
+  function loadSound(url) {
+    if (_soundBuffers[url]) return Promise.resolve(_soundBuffers[url]);
+    prefetchSound(url);
+    return _soundBytes[url]
+      .then(bytes => {
+        if (!bytes) throw new Error('no sound data');
+        return getAudioCtx().decodeAudioData(bytes.slice(0));
+      })
+      .then(buf => (_soundBuffers[url] = buf));
   }
 
   function playBuffer(buf) {
@@ -1945,6 +1979,10 @@
       el.innerHTML = alienSpriteHtml(1);
       el.style.color = ALIEN_SPRITES[1].color;
     });
+
+    // ── Sounds ────────────────────────────────────────────────
+    prefetchSound(WRONG_SOUND_URL);
+    prefetchSound(BONUS_VOICE_URL);
 
     // ── Version ───────────────────────────────────────────────
     const vEl = document.querySelector('.app-version');
