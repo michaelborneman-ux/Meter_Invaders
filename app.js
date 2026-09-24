@@ -7,7 +7,7 @@
   //  Constants
   // ══════════════════════════════════════════════════════════
 
-  const VERSION = 'v1.6.3';
+  const VERSION = 'v1.6.4';
 
   const DIAL_CLOCKWISE = [false, true, false, true];
   const DIAL_LABELS = ['×1000', '×100', '×10', '×1'];
@@ -47,6 +47,7 @@
   let _audioCtx = null;
   function getAudioCtx() {
     if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (_audioCtx.state === 'suspended') _audioCtx.resume().catch(() => { });
     return _audioCtx;
   }
 
@@ -161,7 +162,9 @@
       echo.start(t + 0.18); echo.stop(t + 0.6);
     } catch (_) {}
 
-    // Speech synthesis — less pitch distortion sounds more human
+    // Speech synthesis — less pitch distortion sounds more human.
+    // Skipped while voice input is on: on iPhone, speaking can leave the mic deaf.
+    if (voice.enabled) return;
     try {
       const ss = window.speechSynthesis;
       if (!ss) return;
@@ -215,13 +218,37 @@
     } catch (_) { }
   }
 
-  const _wrongAudio = new Audio('./wrong-answer-sound-effect.mp3');
+  // Played through Web Audio rather than an <audio> element: on iPhone, <audio>
+  // playback can leave speech recognition listening but deaf afterwards.
+  const WRONG_SOUND_URL = './wrong-answer-sound-effect.mp3';
+  const _wrongBytes = fetch(WRONG_SOUND_URL).then(r => r.arrayBuffer()).catch(() => null);
+  let _wrongBuffer = null;
+  let _wrongAudio = null;   // fallback when fetch isn't available (page opened as a file)
+
   function playWrongSound() {
     try {
-      _wrongAudio.currentTime = 0;
-      _wrongAudio.play().catch(() => { });
       if (navigator.vibrate) navigator.vibrate(200);
+      if (_wrongBuffer) { playBuffer(_wrongBuffer); return; }
+      _wrongBytes
+        .then(bytes => {
+          if (!bytes) throw new Error('no sound data');
+          return getAudioCtx().decodeAudioData(bytes.slice(0));
+        })
+        .then(buf => { _wrongBuffer = buf; playBuffer(buf); })
+        .catch(() => {
+          if (!_wrongAudio) _wrongAudio = new Audio(WRONG_SOUND_URL);
+          _wrongAudio.currentTime = 0;
+          _wrongAudio.play().catch(() => { });
+        });
     } catch (_) { }
+  }
+
+  function playBuffer(buf) {
+    const ctx = getAudioCtx();
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(ctx.destination);
+    src.start();
   }
 
   // ══════════════════════════════════════════════════════════
@@ -590,6 +617,8 @@
   // ══════════════════════════════════════════════════════════
 
   const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  // Installed to the iPhone/iPad Home Screen, where speech recognition is unreliable
+  const IOS_HOME_SCREEN_APP = window.navigator.standalone === true;
 
   // Spoken words → digits, including common mis-hearings ("for" → 4, "ate" → 8)
   const VOICE_WORD_DIGITS = {
@@ -1496,6 +1525,7 @@
     const note = document.getElementById('game-voice-note');
     if (!voice.supported) note.textContent = 'Voice input needs Chrome, Edge or Safari.';
     else if (voiceState === 'error') note.textContent = voiceMsg;
+    else if (IOS_HOME_SCREEN_APP) note.textContent = 'On iPhone, voice input may not work in the Home Screen app. If it doesn’t hear you, open the game in Safari instead.';
     else note.textContent = 'Say each digit, e.g. “four two seven one”. Say “clear” to start over, “pause” to pause.';
     note.classList.toggle('vs-error', voiceState === 'error');
   }
