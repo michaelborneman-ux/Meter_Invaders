@@ -7,7 +7,7 @@
   //  Constants
   // ══════════════════════════════════════════════════════════
 
-  const VERSION = 'v1.8.0';
+  const VERSION = 'v1.9.0';
 
   const DIAL_CLOCKWISE = [false, true, false, true];
   const DIAL_LABELS = ['×1000', '×100', '×10', '×1'];
@@ -457,6 +457,7 @@
 
   function showView(id) {
     if (id !== 'view-game') pauseGame();
+    if (id !== 'view-practice' && practiceViewActive()) endPracticeSession();
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.getElementById(id).classList.add('active');
     document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -632,6 +633,7 @@
   let gameDir = 'ltr';
 
   function initPractice() {
+    endPracticeSession();
     pracState.correct = 0;
     pracState.total = 0;
     pracState.streak = 0;
@@ -685,6 +687,7 @@
       msg.textContent = `Wrong. Correct reading: ${pracState.answer} — ${missedDialsHint(missed)}`;
     }
     updatePracStats();
+    recordPracticeProgress();
     // Leave a miss on screen longer so the ringed dials can be studied
     setTimeout(nextPracQuestion, correct ? 1200 : 2500);
   }
@@ -1748,6 +1751,7 @@
         ? 'Out of lives — three misread meters.'
         : 'The aliens reached the ground!';
     renderSummary('game-over-summary');
+    recordGameResult(`Level ${gState.level}`);
     prepareSave('over');
     syncVoice();
     document.getElementById('game-screen').classList.add('hidden');
@@ -1763,6 +1767,7 @@
     playVictorySound();
     document.getElementById('game-victory-score').textContent = gState.score;
     renderSummary('game-victory-summary');
+    recordGameResult('Victory');
     prepareSave('victory');
     syncVoice();
     document.getElementById('game-screen').classList.add('hidden');
@@ -1823,6 +1828,7 @@
     if (btn.disabled) return;
     const name = document.getElementById(`${prefix}-name-input`).value.trim() || 'Anonymous';
     saveLastName(name);
+    renderPlayerName();
     const rank = addGameScore({
       name,
       score: gState.score,
@@ -1892,6 +1898,267 @@
     scores.splice(10);
     saveScores(LS_GAME_SCORES, scores);
     return rank <= 10 ? rank : null;
+  }
+
+
+  // ══════════════════════════════════════════════════════════
+  //  Score sync → GitHub Gist
+  // ══════════════════════════════════════════════════════════
+  // Each finished game and practice session is appended to one JSON file in a
+  // GitHub Gist. Like the other MMR tools, the gist-scoped token is typed into
+  // Settings and kept on this device only — never in the code. Records wait in
+  // a local queue until they sync, so nothing is lost offline or before setup.
+
+  const LS_SYNC_TOKEN = 'mrt-sync-token';
+  const LS_SYNC_GIST = 'mrt-sync-gist';
+  const LS_SYNC_QUEUE = 'mrt-sync-queue';
+  const LS_SYNC_LAST = 'mrt-sync-last';
+  const SYNC_FILE = 'meter-training-scores.json';
+  const GIST_API = 'https://api.github.com/gists';
+
+  function lsGet(key) {
+    try { return localStorage.getItem(key) || ''; } catch (_) { return ''; }
+  }
+  function lsSet(key, value) {
+    try {
+      if (value) localStorage.setItem(key, value); else localStorage.removeItem(key);
+    } catch (_) { }
+  }
+
+  function playerName() {
+    return loadLastName() || 'Anonymous';
+  }
+
+  function newRecordId() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+  }
+
+  function dialMissesByLabel(misses) {
+    const out = {};
+    DIAL_LABELS.forEach((label, i) => { out[label] = misses[i]; });
+    return out;
+  }
+
+  function loadSyncQueue() {
+    try { return JSON.parse(localStorage.getItem(LS_SYNC_QUEUE)) || []; } catch (_) { return []; }
+  }
+  function saveSyncQueue(queue) {
+    try { localStorage.setItem(LS_SYNC_QUEUE, JSON.stringify(queue)); } catch (_) { }
+  }
+
+  // Add or update (same id) a record, then try to send it
+  function queueScore(record, { sendNow = true } = {}) {
+    const queue = loadSyncQueue();
+    const i = queue.findIndex(r => r.id === record.id);
+    if (i >= 0) queue[i] = record; else queue.push(record);
+    saveSyncQueue(queue);
+    if (sendNow) flushScores();
+    else renderSyncStatus();
+  }
+
+  let _syncBusy = null;
+  let _syncAgain = false;
+  let _syncError = '';
+
+  function flushScores() {
+    if (_syncBusy) { _syncAgain = true; return _syncBusy; }
+    _syncBusy = syncToGist()
+      .then(() => { _syncError = ''; })
+      .catch(e => {
+        // fetch() throws a TypeError when there's no connection
+        _syncError = e instanceof TypeError
+          ? "Can't reach GitHub (no internet?) — scores are saved here and will sync later."
+          : (e.message || String(e));
+      })
+      .finally(() => {
+        _syncBusy = null;
+        renderSyncStatus();
+        if (_syncAgain) { _syncAgain = false; flushScores(); }
+      });
+    renderSyncStatus();
+    return _syncBusy;
+  }
+
+  async function syncToGist() {
+    const token = lsGet(LS_SYNC_TOKEN);
+    const queue = loadSyncQueue();
+    if (!token || queue.length === 0) return;
+
+    const headers = {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/vnd.github+json',
+      'Content-Type': 'application/json',
+    };
+    let gistId = lsGet(LS_SYNC_GIST);
+    let data = { app: 'Meter Reading Training', scores: [] };
+
+    // Read what's there first so records from other devices are kept
+    if (gistId) {
+      const res = await fetch(`${GIST_API}/${gistId}`, { headers, cache: 'no-store' });
+      if (res.status === 401) throw new Error('GitHub rejected the token — check it in Settings.');
+      if (res.status === 404) throw new Error('Gist not found — check the Gist ID, and that the token belongs to its owner.');
+      if (!res.ok) throw new Error(`Couldn't read the gist (HTTP ${res.status}).`);
+      const gist = await res.json();
+      const file = gist.files && gist.files[SYNC_FILE];
+      if (file) {
+        const text = file.truncated ? await (await fetch(file.raw_url, { cache: 'no-store' })).text() : file.content;
+        try {
+          data = JSON.parse(text);
+          if (!Array.isArray(data.scores)) data.scores = [];
+        } catch (_) {
+          throw new Error(`${SYNC_FILE} in the gist isn't valid JSON — fix or delete it, then sync again.`);
+        }
+      }
+    }
+
+    // Merge by id: new records are added, updated practice sessions replace their old copy
+    const sent = queue.map(r => ({ ...r }));
+    sent.forEach(r => {
+      const i = data.scores.findIndex(x => x.id === r.id);
+      if (i >= 0) data.scores[i] = r; else data.scores.push(r);
+    });
+    data.app = 'Meter Reading Training';
+    data.updated = new Date().toISOString();
+
+    const files = { [SYNC_FILE]: { content: JSON.stringify(data, null, 2) } };
+    const res = gistId
+      ? await fetch(`${GIST_API}/${gistId}`, { method: 'PATCH', headers, body: JSON.stringify({ files }) })
+      : await fetch(GIST_API, {
+        method: 'POST', headers,
+        body: JSON.stringify({ description: 'Meter Reading Training scores', public: false, files }),
+      });
+    if (res.status === 401) throw new Error('GitHub rejected the token — check it in Settings.');
+    if (res.status === 403 || res.status === 404) {
+      throw new Error("The token can't write to this gist — it needs the gist scope and must belong to the gist's owner.");
+    }
+    if (!res.ok) throw new Error(`Sync failed (HTTP ${res.status}).`);
+    const saved = await res.json();
+    if (saved.id && saved.id !== gistId) lsSet(LS_SYNC_GIST, saved.id);
+
+    // Drop what was sent, unless it changed again while we were syncing
+    const stillQueued = loadSyncQueue().filter(r => {
+      const s = sent.find(x => x.id === r.id);
+      return !s || JSON.stringify(s) !== JSON.stringify(r);
+    });
+    saveSyncQueue(stillQueued);
+    lsSet(LS_SYNC_LAST, new Date().toISOString());
+  }
+
+  // Accepts a bare gist id or a gist.github.com link
+  function parseGistId(text) {
+    const m = String(text).trim().match(/([0-9a-f]{20,})\/?(?:#.*)?$/i);
+    return m ? m[1] : '';
+  }
+
+  function renderSyncStatus() {
+    const el = document.getElementById('sync-status');
+    if (!el) return;
+    const pending = loadSyncQueue().length;
+    const last = lsGet(LS_SYNC_LAST);
+    let text;
+    el.classList.remove('sync-error');
+    if (_syncBusy) text = 'Syncing…';
+    else if (_syncError) { text = '⚠ ' + _syncError; el.classList.add('sync-error'); }
+    else if (!lsGet(LS_SYNC_TOKEN)) {
+      text = pending ? `${pending} score record(s) saved on this device — add a token to send them.` : 'Not connected — scores stay on this device.';
+    } else if (pending) text = `${pending} record(s) waiting to sync.`;
+    else text = last ? `✓ All scores synced (last ${new Date(last).toLocaleString()})` : '✓ Connected — scores will sync after your next game or practice.';
+    el.textContent = text;
+
+    const gistId = lsGet(LS_SYNC_GIST);
+    const link = document.getElementById('sync-gist-link');
+    link.classList.toggle('hidden', !gistId);
+    if (gistId) link.href = `https://gist.github.com/${gistId}`;
+  }
+
+  function renderPlayerName() {
+    document.getElementById('player-name-display').textContent = loadLastName() || 'Anonymous';
+  }
+
+  function openSettings() {
+    document.getElementById('set-name').value = loadLastName();
+    document.getElementById('set-token').value = lsGet(LS_SYNC_TOKEN);
+    document.getElementById('set-gist').value = lsGet(LS_SYNC_GIST);
+    renderSyncStatus();
+    document.getElementById('settings-panel').classList.remove('hidden');
+    document.getElementById('set-name').focus();
+  }
+
+  function closeSettings() {
+    document.getElementById('settings-panel').classList.add('hidden');
+  }
+
+  function saveSettings() {
+    saveLastName(document.getElementById('set-name').value.trim());
+    lsSet(LS_SYNC_TOKEN, document.getElementById('set-token').value.trim());
+    const gistText = document.getElementById('set-gist').value.trim();
+    const gistId = parseGistId(gistText);
+    if (gistText && !gistId) {
+      _syncError = "That doesn't look like a Gist ID or gist link.";
+      renderSyncStatus();
+      return;
+    }
+    lsSet(LS_SYNC_GIST, gistId);
+    document.getElementById('set-gist').value = gistId;
+    _syncError = '';
+    renderPlayerName();
+    flushScores();
+  }
+
+  // ── What gets recorded ─────────────────────────────────────
+
+  function recordGameResult(result) {
+    const s = gState.stats;
+    queueScore({
+      id: newRecordId(),
+      type: 'game',
+      name: playerName(),
+      date: new Date().toISOString(),
+      result,
+      score: gState.score,
+      level: gState.level,
+      accuracy: gameAccuracy(s),
+      correct: s.correct,
+      attempts: s.attempts,
+      avgSecondsPerMeter: s.correct ? +(s.correctTime / s.correct).toFixed(1) : null,
+      bestStreak: gState.bestStreak,
+      dialMisses: dialMissesByLabel(s.dialMisses),
+      voice: voice.enabled,
+    });
+  }
+
+  // A practice session is one record, updated after every answer
+  let _pracSyncTimer = null;
+  function recordPracticeProgress() {
+    const p = pracState;
+    if (!p.total) return;
+    if (!p.sessionId) { p.sessionId = newRecordId(); p.startedAt = new Date().toISOString(); }
+    queueScore({
+      id: p.sessionId,
+      type: 'practice',
+      name: playerName(),
+      date: p.startedAt,
+      updated: new Date().toISOString(),
+      accuracy: Math.round(100 * p.correct / p.total),
+      correct: p.correct,
+      attempts: p.total,
+      bestStreak: p.bestStreak,
+      dialMisses: dialMissesByLabel(p.dialMisses),
+      proMode: document.getElementById('prac-pro').checked,
+      voice: voice.enabled,
+    }, { sendNow: false });
+    // Send at most once a minute while practising; also sent when leaving Practice
+    if (!_pracSyncTimer) {
+      _pracSyncTimer = setTimeout(() => { _pracSyncTimer = null; flushScores(); }, 60000);
+    }
+  }
+
+  function endPracticeSession() {
+    if (pracState.sessionId) flushScores();
+    clearTimeout(_pracSyncTimer);
+    _pracSyncTimer = null;
+    pracState.sessionId = null;
   }
 
   // ══════════════════════════════════════════════════════════
@@ -2099,6 +2366,25 @@
       el.innerHTML = alienSpriteHtml(1);
       el.style.color = ALIEN_SPRITES[1].color;
     });
+
+    // ── Settings / score sync ─────────────────────────────────
+    document.getElementById('btn-settings').addEventListener('click', openSettings);
+    document.getElementById('btn-player-change').addEventListener('click', openSettings);
+    document.getElementById('btn-settings-close').addEventListener('click', closeSettings);
+    document.getElementById('btn-settings-save').addEventListener('click', saveSettings);
+    document.getElementById('btn-sync-now').addEventListener('click', () => { _syncError = ''; flushScores(); });
+    document.getElementById('settings-panel').addEventListener('click', e => {
+      if (e.target.id === 'settings-panel') closeSettings();
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && !document.getElementById('settings-panel').classList.contains('hidden')) closeSettings();
+    });
+    window.addEventListener('online', () => flushScores());
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && practiceViewActive() && pracState.total) flushScores();
+    });
+    renderPlayerName();
+    flushScores();   // send anything left over from last time
 
     // ── Sounds ────────────────────────────────────────────────
     ['pointerdown', 'keydown', 'touchend'].forEach(type => {

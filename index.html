@@ -13,6 +13,7 @@
   <!-- ── Home ───────────────────────────────────────────── -->
   <div id="view-home" class="view active">
     <div class="home-hero">
+      <button id="btn-settings" class="btn-settings" aria-label="Settings" title="Settings">⚙</button>
       <div class="hero-icon">⚡</div>
       <h1 class="hero-title">Meter Reading<br>Training</h1>
       <p class="hero-sub">Learn to read gas meters like a pro</p>
@@ -40,6 +41,10 @@
         </div>
       </button>
     </div>
+    <p class="player-line">
+      Playing as <strong id="player-name-display">—</strong> ·
+      <button id="btn-player-change" class="link-btn">change</button>
+    </p>
     <div class="app-version"></div>
   </div>
 
@@ -323,6 +328,45 @@
   </div><!-- #view-game -->
 
 </div><!-- #main -->
+
+<!-- Settings (player name + score sync) -->
+<div id="settings-panel" class="settings-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+  <div class="settings-card">
+    <div class="settings-head">
+      <h2 id="settings-title">Settings</h2>
+      <button id="btn-settings-close" class="settings-close" aria-label="Close">✕</button>
+    </div>
+
+    <label class="field">
+      <span>Player name</span>
+      <input id="set-name" class="name-input" type="text" maxlength="20" placeholder="Your name" autocomplete="off">
+    </label>
+
+    <h3>Score sync · GitHub Gist</h3>
+    <p class="settings-help">
+      Finished games and practice sessions are saved to <code>meter-training-scores.json</code>
+      in a GitHub Gist. The token is kept on this device only.
+    </p>
+    <label class="field">
+      <span>GitHub token (gist scope only)</span>
+      <input id="set-token" class="name-input" type="password" autocomplete="off" spellcheck="false" placeholder="ghp_…">
+    </label>
+    <label class="field">
+      <span>Gist ID or link <small>— leave blank to create a new secret gist</small></span>
+      <input id="set-gist" class="name-input" type="text" autocomplete="off" spellcheck="false" placeholder="e.g. https://gist.github.com/you/abc123…">
+    </label>
+    <p class="settings-help">
+      To make a token: github.com → Settings → Developer settings → Personal access tokens →
+      Tokens (classic) → Generate new token, and tick only <strong>gist</strong>.
+    </p>
+    <div class="settings-actions">
+      <button id="btn-settings-save" class="btn-primary">Save</button>
+      <button id="btn-sync-now" class="btn-secondary">Sync now</button>
+    </div>
+    <p class="sync-status" id="sync-status"></p>
+    <a id="sync-gist-link" class="sync-link hidden" target="_blank" rel="noopener">Open the gist ↗</a>
+  </div>
+</div>
 
 <!-- Bottom Navigation -->
 <nav class="bottom-nav">

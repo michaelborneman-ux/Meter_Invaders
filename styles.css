@@ -266,6 +266,7 @@ body::before {
 }
 
 .home-hero {
+  position: relative;
   text-align: center;
   padding-top: 8px;
 }
@@ -895,3 +896,83 @@ body::before {
 }
 
 .voice-status:not(.hidden) { cursor: pointer; }
+
+/* ── Settings button / player line (Home) ── */
+.btn-settings {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 20px;
+  cursor: pointer;
+}
+.btn-settings:hover { color: var(--accent); border-color: var(--accent); }
+.player-line { text-align: center; font-size: 13px; color: var(--muted); margin: 14px 0 8px; }
+.player-line strong { color: var(--text); }
+.link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--accent);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* ── Settings panel ── */
+.settings-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(5,5,15,0.8);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 24px 16px;
+  overflow-y: auto;
+}
+.settings-overlay.hidden { display: none; }
+.settings-card {
+  width: 100%;
+  max-width: 460px;
+  margin: auto 0;
+  background: var(--surface);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 14px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.settings-head { display: flex; align-items: center; justify-content: space-between; }
+.settings-head h2 { font-size: 20px; color: var(--accent); }
+.settings-card h3 { font-size: 14px; color: var(--text); margin-top: 6px; letter-spacing: 0.3px; }
+.settings-close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 18px;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+}
+.settings-close:hover { color: var(--text); }
+.field { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--muted); }
+.field small { font-size: 12px; }
+.field input { text-align: left; font-size: 15px; }
+.settings-help { font-size: 12px; color: var(--muted); line-height: 1.5; }
+.settings-help code { color: var(--text); font-size: 12px; }
+.settings-actions { display: flex; gap: 8px; }
+.settings-actions > * { flex: 1; }
+.sync-status { font-size: 13px; color: var(--green); line-height: 1.4; }
+.sync-status.sync-error { color: var(--red); }
+.sync-link { font-size: 13px; color: var(--accent); }
+.sync-link.hidden { display: none; }
+/* Keep "Playing as" right under the menu cards; version stays at the bottom */
+#view-home .home-cards { flex: 0 0 auto; }
+#view-home .app-version { margin-top: auto; }
