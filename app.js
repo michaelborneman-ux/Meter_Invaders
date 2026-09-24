@@ -7,7 +7,7 @@
   //  Constants
   // ══════════════════════════════════════════════════════════
 
-  const VERSION = 'v1.6.2';
+  const VERSION = 'v1.6.3';
 
   const DIAL_CLOCKWISE = [false, true, false, true];
   const DIAL_LABELS = ['×1000', '×100', '×10', '×1'];
@@ -759,6 +759,20 @@
     try { voice.rec.start(); voice.running = true; } catch (_) { /* already started */ }
   }
 
+  // Start listening afresh right now. iPhone Safari only passes audio to speech
+  // recognition started directly inside a tap, so call this from click handlers.
+  function voiceRestartNow() {
+    if (!voice.supported) return;
+    const old = voice.rec;
+    if (old) {
+      old.onstart = old.onend = old.onerror = old.onresult = null;
+      try { old.abort(); } catch (_) { }
+    }
+    voice.rec = voiceCreate();
+    voice.running = false;
+    voiceStart();
+  }
+
   function voiceSetWanted(wanted) {
     voice.wanted = wanted;
     if (wanted) voiceStart();
@@ -910,6 +924,11 @@
 
   function startGame() {
     if (gState) { gState.ended = true; cancelAnimationFrame(gState.animId); }
+    if (voice.enabled) {
+      // Start the mic inside the START tap (required on iPhone)
+      voice.wanted = true;
+      voiceRestartNow();
+    }
     document.getElementById('game-start-screen').classList.add('hidden');
     document.getElementById('game-pause-screen').classList.add('hidden');
     document.getElementById('game-over-screen').classList.add('hidden');
@@ -1156,6 +1175,8 @@
   }
 
   function focusFirstGameInput() {
+    // On phones with voice on, don't pop up the keyboard (and its own dictation mic)
+    if (voice.enabled && window.matchMedia('(pointer: coarse)').matches) return;
     setTimeout(() => {
       const firstId = gameDir === 'rtl' ? 'game-d3' : 'game-d0';
       const d = document.getElementById(firstId);
@@ -1470,7 +1491,7 @@
     el.classList.toggle('vs-error', voiceState === 'error');
     if (voiceState === 'error') el.textContent = '⚠ ' + voiceMsg;
     else if (heard) el.textContent = `🎤 Heard: “${heard}”`;
-    else if (voiceState === 'listening') el.textContent = '🎤 Listening — say the reading, or “clear” to start over';
+    else if (voiceState === 'listening') el.textContent = '🎤 Listening… (tap here if it stops hearing you)';
     else el.textContent = '🎤 Starting microphone…';
     const note = document.getElementById('game-voice-note');
     if (!voice.supported) note.textContent = 'Voice input needs Chrome, Edge or Safari.';
@@ -1485,7 +1506,10 @@
     if (voice.enabled && !isGameRunning()) {
       // Ask for microphone permission now rather than mid-game
       voice.probing = true;
-      voiceStart();
+      voiceRestartNow();
+    } else if (voice.enabled && gameViewActive()) {
+      voice.wanted = true;
+      voiceRestartNow();
     }
     syncVoice();
     if (isGameRunning() && !gState.paused) focusFirstGameInput();
@@ -1824,7 +1848,10 @@
       showView('view-home');
     });
     document.getElementById('btn-game-pause').addEventListener('click', pauseGame);
-    document.getElementById('btn-game-resume').addEventListener('click', resumeGame);
+    document.getElementById('btn-game-resume').addEventListener('click', () => {
+      resumeGame();
+      if (voice.enabled && isGameRunning()) voiceRestartNow();
+    });
     document.getElementById('btn-game-quit').addEventListener('click', showGameStart);
     ['over', 'victory'].forEach(prefix => {
       document.getElementById(`btn-save-${prefix}`).addEventListener('click', () => saveResult(prefix));
@@ -1837,7 +1864,12 @@
     document.addEventListener('keydown', e => {
       if (e.key !== 'Escape' || !isGameRunning()) return;
       if (!document.getElementById('view-game').classList.contains('active')) return;
-      if (gState.paused) resumeGame(); else pauseGame();
+      if (gState.paused) {
+        resumeGame();
+        if (voice.enabled) voiceRestartNow();
+      } else {
+        pauseGame();
+      }
     });
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) pauseGame();
@@ -1867,6 +1899,15 @@
     const micBtn = document.getElementById('btn-game-mic');
     micBtn.classList.toggle('hidden', !voice.supported);
     micBtn.addEventListener('click', () => setVoiceEnabledFromUser(!voice.enabled));
+    // Tapping the status line restarts the mic if it has stopped hearing
+    document.getElementById('game-voice-status').addEventListener('click', () => {
+      if (!voice.enabled || !isGameRunning()) return;
+      voiceState = 'off';
+      renderVoiceStatus();
+      voice.wanted = true;
+      voiceRestartNow();
+      focusFirstGameInput();
+    });
     updateVoiceControls();
     window.addEventListener('blur', pauseGame);
 

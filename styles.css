@@ -862,3 +862,5 @@ body::before {
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
 }
+
+.voice-status:not(.hidden) { cursor: pointer; }
