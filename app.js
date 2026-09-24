@@ -7,7 +7,7 @@
   //  Constants
   // ══════════════════════════════════════════════════════════
 
-  const VERSION = 'v1.6.0';
+  const VERSION = 'v1.6.1';
 
   const DIAL_CLOCKWISE = [false, true, false, true];
   const DIAL_LABELS = ['×1000', '×100', '×10', '×1'];
@@ -27,7 +27,12 @@
   const G_CELL_W = G_ALIEN_W + G_GAP_X;   // 50
   const G_CELL_H = G_ALIEN_H + G_GAP_Y;   // 54
   const G_STEP_DOWN = 30;
-  const G_BASE_SPD = 0.4;          // px per 60fps frame
+  const G_BASE_SPD = 0.4;          // px per 60fps frame, on the reference screen
+  // Movement is scaled to the play area so aliens take the same time to reach
+  // the ground on a phone as on a computer. These are the reference play-area
+  // sizes that speeds and G_STEP_DOWN were tuned for (a typical laptop window).
+  const G_REF_TRAVEL = 900;         // side-to-side room the grid has to move
+  const G_REF_DESCENT = 450;        // room between the grid and the ground
   const G_FRAME_MS = 1000 / 60;
   const G_MARCH_MS = 500;           // sprite animation frame swap
   const G_STREAK_FOR_DOUBLE = 3;    // correct answers in a row for a double kill
@@ -937,6 +942,7 @@
       aStartTime: Date.now(),
       areaW,
       groundY,
+      ...paceScale(areaW, groundY),
       submitting: false,
       inTransition: false,
       paused: false,
@@ -952,6 +958,15 @@
 
     startWave();
     syncVoice();
+  }
+
+  // How this screen's play area compares to the reference one
+  function paceScale(areaW, groundY) {
+    const gridW = G_COLS * G_CELL_W - G_GAP_X;
+    const gridH = (G_ROWS - 1) * G_CELL_H + G_ALIEN_H;
+    const travel = Math.max(areaW - 16 - gridW, 40);
+    const descent = Math.max(groundY - 16 - gridH, 60);
+    return { scaleX: travel / G_REF_TRAVEL, scaleY: descent / G_REF_DESCENT };
   }
 
   // Set up a fresh grid of aliens for the current level
@@ -1010,7 +1025,7 @@
     const dt = gState.lastTs == null ? 1 : Math.min(ts - gState.lastTs, 50) / G_FRAME_MS;
     gState.lastTs = ts;
 
-    gState.groupX += gState.dir * gState.speed * dt;
+    gState.groupX += gState.dir * gState.speed * gState.scaleX * dt;
 
     const grid = document.getElementById('alien-grid');
     gState.marchTimer += dt * G_FRAME_MS;
@@ -1034,10 +1049,10 @@
 
     if (gState.dir > 0 && rightEdge >= gState.areaW - 8) {
       gState.dir = -1;
-      gState.groupY += G_STEP_DOWN;
+      gState.groupY += G_STEP_DOWN * gState.scaleY;
     } else if (gState.dir < 0 && leftEdge <= 8) {
       gState.dir = 1;
-      gState.groupY += G_STEP_DOWN;
+      gState.groupY += G_STEP_DOWN * gState.scaleY;
     }
 
     // Ground check
