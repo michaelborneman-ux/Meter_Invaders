@@ -7,7 +7,7 @@
   //  Constants
   // ══════════════════════════════════════════════════════════
 
-  const VERSION = 'v1.7.0';
+  const VERSION = 'v1.7.1';
 
   const DIAL_CLOCKWISE = [false, true, false, true];
   const DIAL_LABELS = ['×1000', '×100', '×10', '×1'];
@@ -49,6 +49,21 @@
     if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     if (_audioCtx.state === 'suspended') _audioCtx.resume().catch(() => { });
     return _audioCtx;
+  }
+
+  // Browsers (Safari especially) only let audio start inside a tap or key press.
+  // With voice input the first sound comes from a speech result instead, and the
+  // audio engine would stay muted — so unlock it on START and on any interaction.
+  function unlockAudio() {
+    if (_audioCtx && _audioCtx.state === 'running') return;
+    try {
+      const ctx = getAudioCtx();
+      // iPhone also needs a sound started inside the gesture
+      const src = ctx.createBufferSource();
+      src.buffer = ctx.createBuffer(1, 1, 22050);
+      src.connect(ctx.destination);
+      src.start(0);
+    } catch (_) { }
   }
 
   function playCorrectSound() {
@@ -987,6 +1002,7 @@
 
   function startGame() {
     if (gState) { gState.ended = true; cancelAnimationFrame(gState.animId); }
+    unlockAudio();
     if (voice.enabled) {
       // Start the mic inside the START tap (required on iPhone)
       voice.wanted = true;
@@ -1981,6 +1997,9 @@
     });
 
     // ── Sounds ────────────────────────────────────────────────
+    ['pointerdown', 'keydown', 'touchend'].forEach(type => {
+      document.addEventListener(type, unlockAudio, { capture: true, passive: true });
+    });
     prefetchSound(WRONG_SOUND_URL);
     prefetchSound(BONUS_VOICE_URL);
 
